@@ -163,6 +163,7 @@ export function generateFunctionalTree(
 	if (!maxRow) return null;
 
 	// collecting total values for nodes
+	const headerNodes: BudgetNode[] = [];
 	for (let ci = 4; ci <= headerRow.cellCount; ci++) {
 		// ^ index is 1-based, func values start at 4th column
 		const headerValue = headerRow.getCell(ci)?.value?.toString() || '';
@@ -175,7 +176,13 @@ export function generateFunctionalTree(
 		const valueCell = maxRow.getCell(ci);
 		const valueStr = (valueCell.result || valueCell.value)?.toString() || '';
 		const value = Number(valueStr.replace(/\D+/g, ''));
+		if (valueStr.includes('-')) {
+			warn(
+				`${sheet.name}: a(z) ${id} funkcionális érték negatív (${valueStr}), az előjel elvész`,
+			);
+		}
 		nodes[id].value = value;
+		headerNodes.push(nodes[id]);
 	}
 
 	// transforming into tree
@@ -196,6 +203,13 @@ export function generateFunctionalTree(
 		.forEach((node) => {
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 			delete nodes[node.id as number];
+		});
+	headerNodes
+		.filter((node) => node.children?.length && node.value)
+		.forEach((node) => {
+			warn(
+				`${sheet.name}: a(z) ${node.id} funkcionális kategóriának alkategóriái vannak, a megadott értékét az alkategóriák összege felülírja`,
+			);
 		});
 	const root: BudgetNode = {
 		name: 'Összesen',
