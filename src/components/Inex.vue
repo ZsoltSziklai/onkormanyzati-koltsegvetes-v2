@@ -14,7 +14,7 @@ const tooltips = computed(() => TOOLTIPS[year.value] || {});
 
 const expenseTree = computed(() => data.value?.expense.econ);
 const expenseChildren = computed(() =>
-	CONFIG.inex.expenseNodes
+	String(CONFIG.inex?.expenseNodes || '')
 		.split(',')
 		.map((id) => expenseTree.value?.children?.filter((n) => n.id === id.trim())[0])
 		.filter((n) => !!n)
@@ -26,7 +26,7 @@ const expenseSum = computed(() =>
 
 const incomeTree = computed(() => data.value?.income.econ);
 const incomeChildren = computed(() =>
-	CONFIG.inex.incomeNodes
+	String(CONFIG.inex?.incomeNodes || '')
 		.split(',')
 		.map((id) => incomeTree.value?.children?.filter((n) => n.id === id.trim())[0])
 		.filter((n) => !!n)
