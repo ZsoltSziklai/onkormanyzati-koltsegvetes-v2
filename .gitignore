@@ -35,6 +35,7 @@ src/data/tooltips.json
 src/data/lorem*
 src/scss/_generated.scss
 static/budget.xlsx
+static/data/milestones.json
 static/search.log
 
 .pnpm-store/
