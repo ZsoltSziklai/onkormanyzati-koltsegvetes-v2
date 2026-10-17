@@ -9,7 +9,29 @@ export default () => {
 			validateSum(root, year);
 		});
 	});
+
+	validateTotals(data);
 };
+
+export function validateTotals(data) {
+	Object.keys(data).forEach((year) => {
+		['expense', 'income'].forEach((side) => {
+			const econ = data[year][side]?.econ;
+			const func = data[year][side]?.func;
+			if (!econ || !func) return;
+			if (econ.value !== func.value) {
+				const diff = func.value - econ.value;
+				const plus = diff > 0 ? '+' : '';
+				print(`Funkcionális és közgazdasági végösszeg eltér (${year}, ${side}):`);
+				print(`\t${'közgazdasági'.padEnd(14)}  ${groupNums(econ.value).padStart(25)}`);
+				print(
+					`\t${'funkcionális'.padEnd(14)}  ${groupNums(func.value).padStart(25)} (${plus}${groupNums(diff)})`,
+				);
+				print('');
+			}
+		});
+	});
+}
 
 function validateSum(node, year) {
 	if (node.children && node.children.length) {
