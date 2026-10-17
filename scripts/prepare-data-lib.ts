@@ -45,7 +45,16 @@ export function generateEconomicTree(sheet: ExcelJS.Worksheet) {
 		const row = sheet.getRow(ri);
 
 		const firstCell = row.getCell(1).value?.toString();
-		if (!firstCell?.match(/^\d{2,}/)) continue;
+		if (!firstCell?.match(/^\d{2,}/)) {
+			const skippedDescriptor = row.getCell(2).value?.toString() || '';
+			if (parseEconomicDescriptor(skippedDescriptor).id) {
+				warn(
+					`${sheet.name} ${ri}. sor kimarad, mert az 1. oszlopa nem legalább kétjegyű szám:`,
+					skippedDescriptor,
+				);
+			}
+			continue;
+		}
 		// we need rows that start with valid economic category ID
 
 		i++;
@@ -55,6 +64,12 @@ export function generateEconomicTree(sheet: ExcelJS.Worksheet) {
 
 		const { id: rawId, name } = parseEconomicDescriptor(descriptor);
 		const value = Number(rawValue.replace(/[^0-9-]+/g, ''));
+		if (rawId && hasDecimals(valueCell.result ?? valueCell.value)) {
+			warn(
+				`${sheet.name} ${ri}. sor összege nem egész szám (${rawValue}), a tizedesjel törlődik:`,
+				descriptor,
+			);
+		}
 		if (rawId && rawId.indexOf('-') == -1) {
 			let id = rawId;
 			if (name.startsWith('ebből:') || nodes[id]) {
@@ -92,6 +107,9 @@ export function generateEconomicTree(sheet: ExcelJS.Worksheet) {
 		if (j > -1) {
 			// found parent
 			const parentId = sortedIds[j];
+			if (!id.startsWith(parentId)) {
+				warn(`Közgazdasági fa: ${id} szülője nem létezik, ide került: ${parentId}`);
+			}
 			nodes[parentId].children = nodes[parentId].children || [];
 			nodes[parentId].children.push(nodes[id]);
 			deletableIds.push(id);
@@ -209,6 +227,20 @@ export function generateFunctionalTree(
 }
 
 export const ECON_ID_RE = /(B|K|FH|FT)[0-9-]+/;
+
+function warn(...message: unknown[]) {
+	console.error('[KÖKÖ]', ...message);
+}
+
+/**
+ * True for non-integer numbers and for strings ending in a 1-2 digit decimal part
+ * (e.g. "1234.5", "1 234,56"). Thousand separators ("1,234,567") are not decimals.
+ */
+export function hasDecimals(raw: unknown) {
+	if (typeof raw === 'number') return !Number.isInteger(raw);
+	if (typeof raw === 'string') return /\d[.,]\d{1,2}\s*$/.test(raw.trim());
+	return false;
+}
 
 export function parseEconomicDescriptor(descriptor: string) {
 	let id, m;
